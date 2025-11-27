@@ -1,1 +1,20 @@
 # terraform apply stage template
+parameters:
+  workingDirectory: ''     # will be passed by parent pipeline
+  varFile: ''              # will be passed by parent pipeline
+
+jobs:
+- job: Terraform_Apply
+  displayName: "Terraform Apply"
+  pool:
+    vmImage: "ubuntu-latest"
+
+  steps:
+    - task: TerraformCLI@1
+      displayName: "Terraform Apply"
+      inputs:
+        command: "apply"
+        workingDirectory: ${{ parameters.workingDirectory }}
+        environmentServiceName: "Azure-Service-Connection"
+        varsFile: ${{ parameters.varFile }}        # correct property name
+        additionalArgs: "-auto-approve"

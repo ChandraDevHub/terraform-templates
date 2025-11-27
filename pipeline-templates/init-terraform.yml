@@ -1,1 +1,14 @@
- # terraform init stage template
+# terraform init stage template
+parameters:
+  workingDirectory: ''     # will be passed by parent pipeline
+
+jobs:
+  - job: Terraform_Init
+    displayName: "Terraform Init"
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+      - task: TerraformCLI@1
+        inputs:
+          command: "init"
+          workingDirectory: ${{ parameters.workingDirectory }}

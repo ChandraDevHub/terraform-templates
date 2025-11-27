@@ -1,1 +1,49 @@
 # tfsec security scanning template
+# pipeline-templates/lint-tfsec.yml
+parameters:
+  workingDirectory: ""
+  tfsecVersion: "latest"
+
+jobs:
+- job: Tfsec_Scan
+  displayName: "Terraform Security Scan (tfsec)"
+  pool:
+    vmImage: "ubuntu-latest"
+
+  steps:
+
+    # 1. Install tfsec
+    - script: |
+        echo "Installing tfsec version: ${{ parameters.tfsecVersion }}"
+        if [ "${{ parameters.tfsecVersion }}" = "latest" ]; then
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+        else
+          curl -L "https://github.com/aquasecurity/tfsec/releases/download/${{ parameters.tfsecVersion }}/tfsec-linux-amd64" -o /usr/local/bin/tfsec
+          chmod +x /usr/local/bin/tfsec
+        fi
+      displayName: "Install tfsec"
+
+    # 2. Run tfsec scan
+    - script: |
+        echo "Running tfsec on directory: ${{ parameters.workingDirectory }}"
+        tfsec ${{ parameters.workingDirectory }} --format json --out tfsec-results.json
+      displayName: "Run Security Scan"
+
+    # 3. Publish report to pipeline
+    - task: PublishPipelineArtifact@1
+      displayName: "Publish tfsec report"
+      inputs:
+        targetPath: "tfsec-results.json"
+        artifact: "tfsec-report"
+        publishLocation: "pipeline"
+    # # 4. Fail the pipeline if issues found
+    # - script: |
+    #     ISSUE_COUNT=$(jq '.results | length' tfsec-results.json)
+    #     echo "tfsec found $ISSUE_COUNT issues."
+    #     if [ "$ISSUE_COUNT" -gt 0 ]; then
+    #       echo "##vso[task.logissue type=error]tfsec found $ISSUE_COUNT issues. Failing the build."
+    #       exit 1
+    #     else
+    #       echo "No issues found by tfsec."
+    #     fi
+    #   displayName: "Check for Issues and Fail if Found"

@@ -1,1 +1,17 @@
 # terraform plan stage template
+parameters:
+  workingDirectory: ''     # will be passed by parent pipeline
+  varFile: ''              # will be passed by parent pipeline
+
+jobs:
+- job: Terraform_Plan
+  displayName: "Terraform Plan"
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - task: TerraformCLI@1
+      inputs:
+        command: 'plan'
+        workingDirectory: ${{ parameters.workingDirectory }}
+        environmentServiceName: 'Azure-Service-Connection'
+        varsFiles: ${{ parameters.varFile }}
